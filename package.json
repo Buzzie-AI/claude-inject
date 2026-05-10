@@ -1,7 +1,7 @@
 {
   "name": "@buzzie-ai/claude-inject",
-  "version": "0.1.0",
-  "description": "SDK to launch a Claude Code session in a child process and inject prompts into it programmatically. A 'good enough' replacement for the experimental channel mechanism in environments where channels are disabled.",
+  "version": "0.1.1",
+  "description": "Drive a long-lived Claude Code session from Node, with structured event streams instead of PTY scraping. Wraps the local claude CLI via stream-json, inheriting the user's existing auth and MCP/plugin config.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
