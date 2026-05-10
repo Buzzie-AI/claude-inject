@@ -28,8 +28,8 @@ export class StreamJsonTransport extends EventEmitter {
     const args = this.buildArgs();
 
     // Strip CLAUDE_CODE_* env vars so the spawned claude doesn't think it's
-    // running inside another Claude session — same logic as the original
-    // Director carve-out from Talkative.
+    // running inside another Claude session (which would otherwise confuse
+    // session tracking when this SDK is itself invoked from Claude Code).
     const env: NodeJS.ProcessEnv = { ...process.env, ...(this.opts.env ?? {}) };
     delete env['CLAUDECODE'];
     delete env['CLAUDE_CODE_ENTRYPOINT'];

@@ -4,11 +4,11 @@ An SDK that launches a Claude Code session in a child process and lets you injec
 
 ## Why
 
-Some orgs disable experimental Claude Code features — including the channel mechanism that the Talkative and WhatsApp plugins rely on for inbound event delivery. With channels off, MCP-based plugins can call tools but can't push notifications into the conversation.
+Drive a long-lived Claude Code session from Node, with structured event streams instead of PTY scraping.
 
-`claude-inject` is a different injection path that doesn't depend on the experimental channel API. Instead of pushing events into a session the human owns, your code *owns* a long-lived `claude` process and feeds it prompts.
+The Claude Code CLI already supports streaming JSON I/O (`--input-format stream-json --output-format stream-json`), but using it correctly across many turns — keeping one subprocess alive, framing prompts as NDJSON, parsing partial-message events, tracking the session UUID for resume — is enough fiddly plumbing that most people give up and shell out to `claude -p` one-shot per turn.
 
-It's not a perfect channels replacement (the human isn't in the loop), but it's good enough for plenty of agentic use cases.
+`claude-inject` is that plumbing as a small SDK: your code *owns* a persistent `claude` process and feeds it prompts. You get tool-call events, streaming text chunks, and full replies back as typed events. Same authentication, same MCP/plugin config, and same tool permissions as the user's interactive Claude Code — no API key required.
 
 ## How it works
 
@@ -129,6 +129,6 @@ npm test                 # both
 
 ## History
 
-This started as the **Director pattern** carved out of the Talkative repo (origin: commit `1d98f64`, "Two Claude -p instances conversing via blessed side-by-side TUI"). The original code spawned one-shot `claude -p` subprocesses, ran a turn loop between two of them, and rendered side-by-side via `blessed`.
+This started as a **Director pattern** experiment: two `claude -p` subprocesses conversing with each other, rendered side-by-side in a `blessed` TUI. The original code spawned a one-shot subprocess per turn and chained them by hand.
 
 The SDK pivot replaces the one-shot pattern with a persistent `claude -p --input-format stream-json` subprocess that stays alive across many user messages — closer to what an interactive session feels like, but driven by code instead of a human keyboard. The original two-Claude TUI lives on as `examples/two-claudes/`.
