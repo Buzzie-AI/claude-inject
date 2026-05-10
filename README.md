@@ -21,6 +21,33 @@ claude -p --input-format stream-json --output-format stream-json \
 
 That keeps `claude` alive across many user messages: each `session.send(...)` writes a single line of NDJSON to stdin, and the SDK parses the streamed events back out of stdout. There's no PTY scraping and no terminal escape-code parsing — everything is structured.
 
+## How this differs from the Claude Agent SDK
+
+Anthropic ships an official [Claude Agent SDK](https://docs.anthropic.com/en/api/agent-sdk) that talks to the Anthropic API directly. If you're building a standalone agent from scratch with your own MCP/tool wiring and you have an API key, that's the right tool.
+
+`claude-inject` is for the case where you want to drive **Claude Code itself** — the user's already-installed, already-authenticated CLI — from code:
+
+|  | Claude Agent SDK | `claude-inject` |
+|---|---|---|
+| Talks to | Anthropic API | Local `claude` CLI binary |
+| Auth | API key | Inherits user's existing Claude Code auth |
+| MCP / plugins / tool permissions | You configure | Inherits user's existing config |
+| Updates | SDK version bumps | Free — comes with `claude` CLI updates |
+| Dependency | `@anthropic-ai/sdk` | `claude` on PATH + its stream-json protocol |
+| Best for | Building a new agent end-to-end | Scripting / extending an existing Claude Code setup |
+
+The tradeoff is that `claude-inject` is coupled to the CLI binary and its stream-json protocol. Pin the `claude` CLI version in CI if reproducibility matters.
+
+## Limitations
+
+Worth knowing before you adopt this:
+
+- **No human in the loop.** Permission prompts don't surface to a UI — the spawned `claude` runs headless under whatever `permissionMode` / `tools` config you pass. If you need per-tool-call approval, build that yourself.
+- **One `send()` in flight at a time per session.** Subsequent calls queue FIFO. Spawn multiple `ClaudeSession`s for parallelism.
+- **`dangerouslySkipPermissions` is a foot-gun.** Same caveat as the underlying CLI flag — only use it in trusted, sandboxed contexts.
+- **Behavior depends on the installed `claude` CLI version.** The stream-json event shapes can shift between CLI releases. Pin the version in CI.
+- **Session resume requires a previous session UUID.** `sessionId` is populated during the first `send()` (not `start()`), because stream-json mode doesn't emit `system/init` until the first message arrives.
+
 ## Install
 
 ```bash
